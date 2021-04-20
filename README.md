@@ -1,5 +1,7 @@
-
 * [What inside Vuex store](#what-inside-vuex-store)
+* [modules](#modules)
+* [namespaced: true](#namespaced--true)
+* [Retrieve store value from DOM](#retrieve-store-value-from-dom)
 * [Create vuex](#create-vuex)
 
 
@@ -103,7 +105,7 @@ export default createStrore({
 	</div>
 </template>
 
-import { mapActions， mapGetters } from "vuex";
+import { mapActions， mapGetters, mapState } from "vuex";
 export default {
 	name: 'Home',
 	methods: {
@@ -126,16 +128,125 @@ export default {
 }
 ```
 
-Note: 雖然我們也可以直接用commit  `this.$store.commit("setColorCode", newValue)` 但是 最好的 是 使用 `dispatch` 跟著它的規則.
+Note: 如果沒有很複雜還是 async await 的 狀態 可以使用`this.$store.commit("setColorCode", newValue)`  但是 最好 還是 必須通過 `actions` 去 處理 mutations
 
 `mapActions`, `mapGetters` 他們接受 Array or Object. 
 
 ```jsx
 methods: {
 	...mapActions({ decreaseCounter: "decreaseCounter" }) 
-	// objectKey 是 我的 methods裡的名字， objectValue 那個是 我 store裡的名字 然後
+	// objectKey 是 我的 vuejs methods裡的名字， objectValue 那個是 我 store裡的名字 然後
 	// spread它 進去 methods裡 那樣 我就不需要寫 decreateCounter() { this.decreateCount() 了 }
 }
+```
+
+## modules
+
+1. Way 1
+
+```jsx
+// store/modules/counter.js
+export const state = {
+    count: 0,
+  };
+
+  export const mutations = {
+    increment(state, value) {
+      state.count += value;
+    },
+    decrement(state) {
+      state.count--;
+    },
+  };
+
+  export const actions = {
+    increaseCounter({ commit }, value) {
+      commit("increment", value);
+    },
+    decreaseCounter({ commit }) {
+      commit("decrement");
+    },
+  };
+// store/index.js
+import { createStore } from "vuex";
+import * as counter from "./modules/counter";
+
+export default createStore({
+	modules: {
+    counter,
+  },	
+})
+```
+
+2. Way 2
+
+```jsx
+// store/modules/counter.js
+export default {
+  state: {
+    count: 0,
+  },
+
+  mutations: {
+    increment(state, value) {
+      state.count += value;
+    },
+    decrement(state) {
+      state.count--;
+    },
+  },
+  actions: {
+    increaseCounter({ commit }, value) {
+      commit("increment", value);
+    },
+    decreaseCounter({ commit }) {
+      commit("decrement");
+    },
+  },
+};
+// store/index.js
+import { createStore } from "vuex";
+import counter from "./modules/counter";
+
+export default createStore({
+  modules: {
+    counter,
+  },
+  // state,
+  // mutations,
+  // actions,
+});
+```
+
+## namespaced: true
+
+```jsx
+// store/modules/counter.js
+export default {
+	namespaced: true,
+	state: {...},
+}
+
+// component 
+export default {
+	const increment = () => {
+    const number = Math.floor(Math.random() * 10);
+    store.dispatch('counter/increaseCounter', number); // + counter/
+  }
+}
+
+```
+
+## Retrieve store value from DOM
+
+```jsx
+/*
+	counter.count, counter 是namespaced: true　
+	能直接 拿到 $store instance 在 dom
+*/
+<template>
+	<h1>{{ $store.state.counter.count }}</h1> 
+</template>
 ```
 
 ## Create vuex
